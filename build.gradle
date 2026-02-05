@@ -1,0 +1,62 @@
+plugins {
+    id 'groovy'
+    id 'java-gradle-plugin'
+}
+
+group = 'nf.plugin'
+version = '0.1.0'
+
+repositories {
+    mavenCentral()
+    maven {
+        url = 'https://repo.maven.apache.org/maven2'
+    }
+}
+
+sourceCompatibility = '11'
+targetCompatibility = '11'
+
+dependencies {
+    compileOnly 'io.nextflow:nextflow:23.10.0'
+    compileOnly 'org.slf4j:slf4j-api:1.7.36'
+    compileOnly 'org.codehaus.groovy:groovy:3.0.19'
+    compileOnly 'org.codehaus.groovy:groovy-nio:3.0.19'
+    
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.spockframework:spock-core:2.3-groovy-3.0'
+}
+
+gradlePlugin {
+    plugins {
+        nfCorePlugin {
+            id = 'nf-claude-nfcore'
+            implementationClass = 'nf.plugin.NfCorePlugin'
+        }
+    }
+}
+
+test {
+    useJUnit()
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
+}
+
+// Make sure to generate plugin metadata
+tasks.register('createPluginDescriptor') {
+    doLast {
+        def pluginDescriptor = file("$buildDir/resources/main/META-INF/MANIFEST.MF")
+        pluginDescriptor.parentFile.mkdirs()
+        pluginDescriptor.text = """
+Manifest-Version: 1.0
+Plugin-Class: nf.plugin.NfCorePlugin
+Plugin-Id: nf-claude-nfcore
+Plugin-Version: ${project.version}
+Plugin-Provider: nf-core community
+Plugin-Requires: nextflow@>=23.10.0
+"""
+    }
+}
+
+processResources.dependsOn createPluginDescriptor

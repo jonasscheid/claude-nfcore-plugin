@@ -1,0 +1,41 @@
+# Gradle
+.gradle/
+build/
+bin/
+*.sw?
+.#*
+*#
+*~
+*.iml
+*.ipr
+*.iws
+*.orig
+
+# IDE
+.idea/
+.vscode/
+.settings/
+.classpath
+.project
+*.sublime-*
+.DS_Store
+
+# Nextflow
+work/
+.nextflow*
+results/
+.nextflow/
+timeline*.html
+report*.html
+trace*.txt
+dag*.html
+
+# Plugin artifacts
+plugins/
+
+# Log files
+*.log
+
+# Temporary files
+tmp/
+temp/
