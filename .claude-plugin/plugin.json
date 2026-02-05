@@ -1,0 +1,22 @@
+{
+  "name": "nf-core",
+  "version": "1.0.0",
+  "description": "Comprehensive Claude Code plugin for nf-core Nextflow pipeline development. Includes skills for pipeline creation, module management, linting, testing, and release preparation following nf-core best practices.",
+  "author": {
+    "name": "nf-core community",
+    "url": "https://nf-co.re"
+  },
+  "homepage": "https://nf-co.re",
+  "repository": "https://github.com/nf-core/tools",
+  "license": "MIT",
+  "keywords": [
+    "nf-core",
+    "nextflow",
+    "bioinformatics",
+    "pipelines",
+    "modules",
+    "workflows",
+    "genomics",
+    "dsl2"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "hooks": [
+    {
+      "event": "PostToolUse",
+      "matcher": {
+        "toolName": "(Edit|Write)",
+        "toolInput": {
+          "file_path": ".*\\.(nf|config)$"
+        }
+      },
+      "hooks": [
+        {
+          "type": "command",
+          "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-nextflow-syntax.sh",
+          "timeout": 30000,
+          "statusMessage": "Validating Nextflow syntax..."
+        }
+      ]
+    },
+    {
+      "event": "PreToolUse",
+      "matcher": {
+        "toolName": "Write",
+        "toolInput": {
+          "file_path": ".*\\.(nf|config)$"
+        }
+      },
+      "hooks": [
+        {
+          "type": "command",
+          "command": "${CLAUDE_PLUGIN_ROOT}/scripts/check-nf-core-conventions.sh",
+          "timeout": 10000
+        }
+      ]
+    }
+  ]
+}
