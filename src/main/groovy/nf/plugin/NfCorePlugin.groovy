@@ -1,8 +1,7 @@
 package nf.plugin
 
 import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import nextflow.plugin.BasePlugin
+import org.pf4j.Plugin
 import org.pf4j.PluginWrapper
 
 /**
@@ -18,9 +17,8 @@ import org.pf4j.PluginWrapper
  * 
  * @author nf-core community
  */
-@Slf4j
 @CompileStatic
-class NfCorePlugin extends BasePlugin {
+class NfCorePlugin extends Plugin {
 
     NfCorePlugin(PluginWrapper wrapper) {
         super(wrapper)

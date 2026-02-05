@@ -1,8 +1,8 @@
-rootProject.name = 'nf-claude-nfcore'
-
 pluginManagement {
     repositories {
         gradlePluginPortal()
         mavenCentral()
     }
 }
+
+rootProject.name = 'nf-claude-nfcore'

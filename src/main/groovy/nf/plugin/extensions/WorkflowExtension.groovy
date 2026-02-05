@@ -46,9 +46,9 @@ class WorkflowExtension {
      */
     static Map<String, String> parametersSummary(Map params) {
         Map<String, String> summary = [:]
-        params.each { key, value ->
-            if (value != null && !key.startsWith('_')) {
-                summary[key] = value.toString()
+        params.each { k, v ->
+            if (v != null && !k.toString().startsWith('_')) {
+                summary[k.toString()] = v.toString()
             }
         }
         log.info("Generated parameters summary with ${summary.size()} entries")
@@ -120,10 +120,10 @@ class WorkflowExtension {
      * @return Formatted duration string
      */
     static String formatDuration(long millis) {
-        long seconds = millis / 1000
-        long minutes = seconds / 60
-        long hours = minutes / 60
-        long days = hours / 24
+        long seconds = millis.intdiv(1000L)
+        long minutes = seconds.intdiv(60L)
+        long hours = minutes.intdiv(60L)
+        long days = hours.intdiv(24L)
         
         if (days > 0) {
             return "${days}d ${hours % 24}h ${minutes % 60}m"
