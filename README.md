@@ -43,7 +43,7 @@ A comprehensive Claude Code plugin for nf-core Nextflow pipeline development. In
 
 ```bash
 git clone https://github.com/jonasscheid/claude-nfcore-plugin.git
-claude --plugin-dir /path/to/claude-nfcore-plugin
+claude --plugin-dir ./claude-nfcore-plugin
 ```
 
 ### Option 2: Add to Claude Code settings
@@ -53,7 +53,7 @@ Add to your `~/.claude/settings.json`:
 ```json
 {
   "enabledPlugins": {
-    "/path/to/claude-nfcore-plugin": true
+    "/absolute/path/to/claude-nfcore-plugin": true
   }
 }
 ```
@@ -71,12 +71,12 @@ Once installed, use skills with the `/nf-core:` prefix:
 
 ## Requirements
 
-- [Claude Code](https://claude.ai/claude-code) CLI
-- Conda environment `nf-core` with nf-core tools installed:
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) CLI
+- Conda environment `nf-core` with nf-core tools and nf-test installed:
   ```bash
-  mamba create -n nf-core nf-core
+  mamba create -n nf-core nf-core nf-test
   ```
-- Nextflow installed for syntax validation hooks
+- [Nextflow](https://www.nextflow.io/) installed for syntax validation hooks
 
 ## nf-core Conventions Enforced
 
@@ -109,4 +109,5 @@ MIT
 
 - [nf-core](https://nf-co.re)
 - [nf-core/tools](https://github.com/nf-core/tools)
-- [Claude Code](https://claude.ai/claude-code)
+- [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code/overview)
+- [Claude Code GitHub](https://github.com/anthropics/claude-code)

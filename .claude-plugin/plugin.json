@@ -7,7 +7,7 @@
     "url": "https://nf-co.re"
   },
   "homepage": "https://nf-co.re",
-  "repository": "https://github.com/nf-core/tools",
+  "repository": "https://github.com/jonasscheid/claude-nfcore-plugin",
   "license": "MIT",
   "keywords": [
     "nf-core",
