@@ -47,7 +47,7 @@ nextflow_process {
 }
 ```
 
-### Workflow Tests
+### Subworkflow Tests
 ```groovy
 nextflow_workflow {
 
@@ -74,6 +74,145 @@ nextflow_workflow {
     }
 }
 ```
+
+### Pipeline-Level Tests
+
+Pipeline-level tests use `nextflow_pipeline` and load params via **profiles** from `conf/test_XYZ.config` files. Params are NEVER defined inline in the nf-test file.
+
+#### Architecture
+
+```
+nextflow.config          # Profiles section maps names → config files
+├── conf/test.config     # Default test params (profile "test")
+├── conf/test_foo.config # Variant test params (profile "test_foo")
+├── conf/test_bar.config # Another variant (profile "test_bar")
+nf-test.config           # Sets default profile "test"
+tests/
+├── nextflow.config      # Shared test data base paths
+├── default.nf.test      # Uses default "test" profile
+├── foo.nf.test          # Overrides to "test_foo" profile
+└── bar.nf.test          # Overrides to "test_bar" profile
+```
+
+#### Step 1: Create `conf/test_XYZ.config`
+
+All test params go here — input files, pipeline flags, resource limits:
+
+```nextflow
+// conf/test_foo.config
+process {
+    resourceLimits = [
+        cpus: 2,
+        memory: '6.GB',
+        time: '2.h'
+    ]
+}
+
+params {
+    config_profile_name        = 'Test Foo profile'
+    config_profile_description = 'Minimal test for Foo variant'
+
+    // Input data
+    input = params.pipelines_testdata_base_path + 'pipeline/testdata/samplesheet.tsv'
+    fasta = params.pipelines_testdata_base_path + 'pipeline/testdata/reference.fasta'
+
+    // Pipeline-specific settings for this test variant
+    some_flag = true
+}
+```
+
+#### Step 2: Register profile in `nextflow.config`
+
+```nextflow
+profiles {
+    test      { includeConfig 'conf/test.config' }
+    test_foo  { includeConfig 'conf/test_foo.config' }
+    test_bar  { includeConfig 'conf/test_bar.config' }
+    // ... container profiles ...
+}
+```
+
+#### Step 3: Write the nf-test file
+
+Default test (uses default profile from `nf-test.config`):
+```groovy
+// tests/default.nf.test
+nextflow_pipeline {
+
+    name "Test pipeline"
+    script "../main.nf"
+    tag "pipeline"
+
+    test("-profile test") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+        }
+
+        then {
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    removeNextflowVersion("$outputDir/pipeline_info/nf_core_pipeline_software_mqc_versions.yml"),
+                    stable_name,
+                    stable_path
+                ).match() }
+            )
+        }
+    }
+}
+```
+
+Variant test (overrides profile):
+```groovy
+// tests/foo.nf.test
+nextflow_pipeline {
+
+    name "Test pipeline"
+    script "../main.nf"
+    tag "pipeline"
+    tag "test_foo"
+    profile "test_foo"
+
+    test("-profile test_foo") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+        }
+
+        then {
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.trace.succeeded().size(),
+                    removeNextflowVersion("$outputDir/pipeline_info/nf_core_pipeline_software_mqc_versions.yml"),
+                    stable_name,
+                    stable_path
+                ).match() }
+            )
+        }
+    }
+}
+```
+
+#### Key Rules for Pipeline-Level Tests
+
+1. **Use `nextflow_pipeline`** — not `nextflow_workflow` (which is for subworkflows)
+2. **Params go in `conf/test_XYZ.config`** — never inline in the nf-test file
+3. **Only `outdir` in the `when` block** — everything else comes from the profile
+4. **Profile override via `profile "test_XYZ"`** at the `nextflow_pipeline` level for non-default tests
+5. **Test name matches profile**: `test("-profile test_XYZ")`
+6. **Tag with test variant name**: `tag "test_foo"` for filtering
+7. **Shared base paths** in `tests/nextflow.config` (e.g., `pipelines_testdata_base_path`)
+8. **Use `nft-utils` plugin** for `getAllFilesFromDir`, `removeNextflowVersion`
 
 ## Test Scenarios to Cover
 

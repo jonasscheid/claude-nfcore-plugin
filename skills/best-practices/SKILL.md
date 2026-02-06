@@ -749,7 +749,7 @@ process {
 
 ## Testing Standards
 
-### nf-test Structure
+### Module/Process Tests
 
 ```groovy
 nextflow_process {
@@ -780,12 +780,81 @@ nextflow_process {
 }
 ```
 
+### Pipeline-Level Tests
+
+Pipeline tests use `nextflow_pipeline` and **always** load params from `conf/test_XYZ.config` via profiles.
+Never define params inline in the nf-test file — only `outdir` goes in the `when` block.
+
+**File layout:**
+```
+conf/test.config         # Default test params
+conf/test_foo.config     # Variant test params
+nextflow.config          # profiles { test_foo { includeConfig 'conf/test_foo.config' } }
+nf-test.config           # profile "test" (default)
+tests/nextflow.config    # Shared test data base paths
+tests/default.nf.test    # Default pipeline test
+tests/foo.nf.test        # Variant pipeline test
+```
+
+**Default test** (uses default profile from `nf-test.config`):
+```groovy
+nextflow_pipeline {
+    name "Test pipeline"
+    script "../main.nf"
+    tag "pipeline"
+
+    test("-profile test") {
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+        }
+        then {
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(removeNextflowVersion("...versions.yml"), stable_name, stable_path).match() }
+            )
+        }
+    }
+}
+```
+
+**Variant test** (overrides profile):
+```groovy
+nextflow_pipeline {
+    name "Test pipeline"
+    script "../main.nf"
+    tag "pipeline"
+    tag "test_foo"
+    profile "test_foo"
+
+    test("-profile test_foo") {
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+        }
+        then { /* same assertion pattern */ }
+    }
+}
+```
+
+**Rules:**
+- Use `nextflow_pipeline` (not `nextflow_workflow`) for pipeline tests
+- Params belong in `conf/test_XYZ.config`, not inline
+- Only `outdir = "$outputDir"` in the `when` block
+- Override default profile with `profile "test_XYZ"` at `nextflow_pipeline` level
+- Test name matches profile: `test("-profile test_XYZ")`
+
 ### Test Coverage
 
 - Test all input combinations (SE/PE, optional inputs)
 - Test edge cases
 - Include stub tests for large data tools
 - Snapshot all outputs
+- For pipelines: create separate `conf/test_XYZ.config` for each test variant
 
 ---
 

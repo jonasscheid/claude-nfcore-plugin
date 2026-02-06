@@ -153,7 +153,7 @@ then {
 }
 ```
 
-## Testing Workflows
+## Testing Subworkflows
 
 ```groovy
 nextflow_workflow {
@@ -166,7 +166,7 @@ nextflow_workflow {
         when {
             workflow {
                 """
-                input[0] = Channel.fromPath(params.input)
+                input[0] = channel.fromPath(params.input)
                 """
             }
         }
@@ -178,6 +178,97 @@ nextflow_workflow {
     }
 }
 ```
+
+## Pipeline-Level Tests
+
+Pipeline tests use `nextflow_pipeline` and load params via profiles from `conf/test_XYZ.config`.
+**Params are NEVER defined inline** — they belong in the config file.
+
+### Required Setup
+
+1. **`conf/test_XYZ.config`** — defines all test params (inputs, flags, resources)
+2. **`nextflow.config` profiles** — maps `test_XYZ { includeConfig 'conf/test_XYZ.config' }`
+3. **`nf-test.config`** — sets `profile "test"` as default
+4. **`tests/nextflow.config`** — shared test data base paths
+
+### Default Pipeline Test
+
+```groovy
+// tests/default.nf.test
+nextflow_pipeline {
+
+    name "Test pipeline"
+    script "../main.nf"
+    tag "pipeline"
+
+    test("-profile test") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+        }
+
+        then {
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    removeNextflowVersion("$outputDir/pipeline_info/nf_core_pipeline_software_mqc_versions.yml"),
+                    stable_name,
+                    stable_path
+                ).match() }
+            )
+        }
+    }
+}
+```
+
+### Variant Pipeline Test (Override Profile)
+
+```groovy
+// tests/foo.nf.test — uses conf/test_foo.config via profile
+nextflow_pipeline {
+
+    name "Test pipeline"
+    script "../main.nf"
+    tag "pipeline"
+    tag "test_foo"
+    profile "test_foo"
+
+    test("-profile test_foo") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+        }
+
+        then {
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.trace.succeeded().size(),
+                    removeNextflowVersion("$outputDir/pipeline_info/nf_core_pipeline_software_mqc_versions.yml"),
+                    stable_name,
+                    stable_path
+                ).match() }
+            )
+        }
+    }
+}
+```
+
+### Key Rules
+
+- **`nextflow_pipeline`** for pipeline tests, `nextflow_workflow` for subworkflows
+- **Only `outdir`** in the `when` block — all other params come from the profile config
+- **`profile "test_XYZ"`** at the `nextflow_pipeline` level overrides the default
+- **Test name = profile**: `test("-profile test_XYZ")`
+- Use `nft-utils` plugin for `getAllFilesFromDir` and `removeNextflowVersion`
 
 ## Stub Runs for Large Data
 
@@ -228,18 +319,40 @@ Create `nf-test.config` in your pipeline root:
 
 ```groovy
 config {
-    // Test directory
-    testsDir "tests"
+    // location for all nf-test tests
+    testsDir "."
 
-    // Work directory for test runs
-    workDir ".nf-test"
+    // nf-test directory including temporary files for each test
+    workDir System.getenv("NFT_WORKDIR") ?: ".nf-test"
 
-    // Config file to use
-    configFile "conf/test.config"
+    // location of an optional nextflow.config file specific for executing tests
+    configFile "tests/nextflow.config"
 
-    // Default profile
-    profile "docker"
+    // ignore tests coming from the nf-core/modules repo
+    ignore 'modules/nf-core/**/tests/*', 'subworkflows/nf-core/**/tests/*'
+
+    // run all tests with default profile from the main nextflow.config
+    profile "test"
+
+    // list of filenames or patterns that should trigger a full test run
+    triggers 'nextflow.config', 'nf-test.config', 'conf/test.config', 'tests/nextflow.config', 'tests/.nftignore'
+
+    // load the necessary plugins
+    plugins {
+        load "nft-utils@0.0.3"
+    }
 }
+```
+
+### `tests/nextflow.config` — Shared Test Base Paths
+
+```nextflow
+params {
+    modules_testdata_base_path = 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/'
+    pipelines_testdata_base_path = 'https://raw.githubusercontent.com/nf-core/test-datasets/refs/heads/PIPELINE_NAME'
+}
+
+aws.client.anonymous = true
 ```
 
 ## Debugging Test Failures
