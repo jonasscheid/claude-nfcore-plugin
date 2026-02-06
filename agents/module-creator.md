@@ -64,9 +64,9 @@ process TOOL_SUBTOOL {
     path reference
 
     output:
-    tuple val(meta), path("*.out")  , emit: result
-    tuple val(meta), path("*.log")  , emit: log    , optional: true
-    path "versions.yml"             , emit: versions
+    tuple val(meta), path("${prefix}.out")  , emit: result
+    tuple val(meta), path("${prefix}.log")  , emit: log    , optional: true
+    path "versions.yml"                     , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -143,7 +143,7 @@ output:
           description: |
             Groovy Map containing sample information
             e.g. `[ id:'sample1', single_end:false ]`
-      - "*.out":
+      - "${prefix}.out":
           type: file
           description: Output file description
           pattern: "*.out"
@@ -152,7 +152,7 @@ output:
           type: map
           description: |
             Groovy Map containing sample information
-      - "*.log":
+      - "${prefix}.log":
           type: file
           description: Log file
           pattern: "*.log"
@@ -293,6 +293,7 @@ conda run -n nf-core nf-test test modules/nf-core/tool/subtool/ --update-snapsho
 2. **Pin versions**: Always specify exact versions
 3. **Minimal inputs**: Only require what's necessary
 4. **Comprehensive outputs**: Emit all useful outputs
-5. **Document thoroughly**: Complete meta.yml
-6. **Test completely**: Cover all input variations
-7. **Follow conventions**: Match existing nf-core modules
+5. **Use prefix-based output patterns**: Always use `path("${prefix}.ext")` instead of `path("*.ext")` to avoid capturing staged input files as outputs (causes unnecessary file copying, especially costly on cloud storage like AWS S3)
+6. **Document thoroughly**: Complete meta.yml
+7. **Test completely**: Cover all input variations
+8. **Follow conventions**: Match existing nf-core modules

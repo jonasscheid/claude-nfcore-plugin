@@ -82,8 +82,8 @@ process TOOL_SUBTOOL {
     tuple val(meta), path(input_file)
 
     output:
-    tuple val(meta), path("*.out"), emit: output
-    path "versions.yml"           , emit: versions
+    tuple val(meta), path("${prefix}.out"), emit: output
+    path "versions.yml"                   , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -150,7 +150,7 @@ output:
       - meta:
           type: map
           description: Sample metadata
-      - "*.out":
+      - "${prefix}.out":
           type: file
           description: Output file description
           pattern: "*.out"

@@ -70,6 +70,15 @@ if command -v nextflow &> /dev/null; then
     # Just do static checks for now
 fi
 
+# Check for overly broad output glob patterns (e.g., path("*.ext") instead of path("${prefix}.ext"))
+if grep -qE '^\s*output:' "$FILE_PATH" 2>/dev/null; then
+    # Look for path("*.something") patterns but exclude versions.yml
+    BROAD_GLOBS=$(grep -nE 'path\(\s*"?\*\.[a-zA-Z]' "$FILE_PATH" 2>/dev/null | grep -v 'versions\.yml' || true)
+    if [ -n "$BROAD_GLOBS" ]; then
+        WARNINGS="${WARNINGS}Broad wildcard output pattern detected (e.g., path(\"*.ext\")). Use prefix-based patterns like path(\"\${prefix}.ext\") to avoid capturing staged input files as outputs. This is especially costly on cloud storage (AWS S3). "
+    fi
+fi
+
 # Check for common Groovy/Nextflow syntax issues
 # Unclosed braces (simple check)
 OPEN_BRACES=$(grep -o '{' "$FILE_PATH" 2>/dev/null | wc -l)

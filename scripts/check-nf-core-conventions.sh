@@ -67,6 +67,13 @@ if echo "$CONTENT" | grep -qE '^\s*process\s+' && ! echo "$CONTENT" | grep -qE "
     REMINDERS="${REMINDERS}Process should have a resource label (e.g., label 'process_medium'). "
 fi
 
+# Check for overly broad output glob patterns (e.g., path("*.ext") instead of path("${prefix}.ext"))
+if echo "$CONTENT" | grep -qE '^\s*output:'; then
+    if echo "$CONTENT" | grep -qE 'path\(\s*"?\*\.[a-zA-Z]' | grep -vqE 'versions\.yml'; then
+        REMINDERS="${REMINDERS}Output uses broad wildcard pattern (e.g., path(\"*.ext\")). Use prefix-based patterns like path(\"\${prefix}.ext\") to avoid capturing staged input files as outputs, which causes unnecessary file copying (especially costly on cloud storage). "
+    fi
+fi
+
 # Output reminders if any
 if [ -n "$REMINDERS" ]; then
     # Format as JSON output for Claude Code

@@ -38,6 +38,7 @@ ch_input = Channel.fromPath(params.input)
 - [ ] `when` block for conditional execution
 - [ ] `versions.yml` output for all processes
 - [ ] `stub` block for testing
+- [ ] Output patterns use `path("${prefix}.ext")` not `path("*.ext")` (broad wildcards capture staged input files, causing unnecessary copies especially on cloud storage)
 
 ### 2. nf-core Standards
 
