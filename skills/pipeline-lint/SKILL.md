@@ -12,9 +12,40 @@ allowed-tools:
 
 # nf-core Pipeline Linting
 
-Validate pipelines against nf-core community guidelines and automatically fix issues where possible.
+Validate pipelines against nf-core community guidelines **AND** Nextflow strict syntax requirements.
 
-## Quick Commands
+## Two Types of Linting
+
+### 1. Nextflow Strict Syntax (`nextflow lint`)
+
+**⚠️ CRITICAL: Required by Q2 2026 for all nf-core pipelines**
+
+Validates Nextflow code against strict syntax rules (zero tolerance for deprecated patterns).
+
+```bash
+# Check strict syntax violations
+nextflow lint .
+nextflow lint main.nf
+nextflow lint workflows/
+
+# Enable strict parser (Nextflow v25.x)
+export NXF_SYNTAX_PARSER=v2
+nextflow lint .
+```
+
+**What it checks:**
+- Removed syntax (errors): for/while loops, switch statements, import statements, etc.
+- Deprecated patterns (warnings): `Channel.` uppercase, implicit closure params, `shell:` blocks
+- Future incompatibilities that will break in Nextflow v26.04.0+
+
+**Current ecosystem status** (as of Feb 2026):
+- **3,320 errors** across 131 nf-core pipelines
+- Only **22.9% of pipelines** are error-free
+- **Deadline: Q2 2026** - all pipelines must pass
+
+### 2. nf-core Community Guidelines (`nf-core pipelines lint`)
+
+Validates against nf-core standards (template compliance, documentation, CI, etc.).
 
 ```bash
 # Lint current directory
@@ -39,12 +70,32 @@ conda run -n nf-core nf-core pipelines lint --markdown
 
 ## Process
 
-1. **Run Initial Lint**: Execute `conda run -n nf-core nf-core pipelines lint` to identify all issues
-2. **Parse Results**: Categorize into PASSED, WARNED, and FAILED tests
-3. **Prioritize Fixes**: Address FAILED tests first, then WARNED
-4. **Apply Automatic Fixes**: Use `--fix` flag for supported issues (requires git repo with no uncommitted changes)
-5. **Manual Fixes**: Guide through fixes that require manual intervention
-6. **Verify**: Re-run lint to confirm all issues are resolved
+### Complete Linting Workflow
+
+1. **Run Nextflow Strict Syntax Lint First**:
+   ```bash
+   nextflow lint .
+   ```
+   - Fix all **errors** (strict syntax violations)
+   - Address **warnings** (deprecated patterns)
+   - These are CRITICAL for Q2 2026 deadline
+
+2. **Run nf-core Community Lint**:
+   ```bash
+   conda run -n nf-core nf-core pipelines lint
+   ```
+   - Categorize: PASSED, WARNED, FAILED
+   - Address FAILED tests first, then WARNED
+
+3. **Apply Automatic Fixes**:
+   - `nf-core pipelines lint --fix` (requires clean git)
+   - Manual fixes for strict syntax violations
+
+4. **Verify**:
+   ```bash
+   nextflow lint .                                    # Must be zero errors
+   conda run -n nf-core nf-core pipelines lint       # All tests passed
+   ```
 
 ## Common Lint Categories
 
@@ -100,8 +151,135 @@ If `nextflow_config` fails, check:
 
 ## Output Interpretation
 
+### nf-core pipelines lint
+
 - **PASSED**: Test passed (shown with `--show-passed`)
 - **WARNED**: Advisory issue, should fix but not blocking
 - **FAILED**: Critical issue, must fix before release
 
 Test names are clickable hyperlinks (Ctrl/Cmd+click) that open documentation for that specific test.
+
+### nextflow lint
+
+- **Parse Errors**: Code cannot be parsed - fundamental syntax problems
+- **Errors**: Strict syntax violations - will break in Nextflow v26.04.0+
+- **Warnings**: Deprecated patterns - should fix soon, will become errors later
+
+## Common Strict Syntax Fixes
+
+### Replace for/while loops with functional operators
+
+```nextflow
+// ❌ ERROR - for loops not allowed
+def results = []
+for (item in list) {
+    results.add(process(item))
+}
+
+// ✅ FIX - use .collect()
+def results = list.collect { item ->
+    process(item)
+}
+```
+
+### Remove import statements
+
+```nextflow
+// ❌ ERROR - imports not allowed
+import groovy.json.JsonSlurper
+
+def json = new JsonSlurper().parse(file)
+
+// ✅ FIX - use fully qualified names
+def json = new groovy.json.JsonSlurper().parse(file)
+```
+
+### Fix Channel. to channel.
+
+```nextflow
+// ❌ WARNING - uppercase Channel deprecated
+ch = Channel.of(1, 2, 3)
+
+// ✅ FIX
+ch = channel.of(1, 2, 3)
+```
+
+### Use explicit closure parameters
+
+```nextflow
+// ❌ WARNING - implicit 'it' parameter
+ch.map { it * 2 }
+
+// ✅ FIX
+ch.map { v -> v * 2 }
+```
+
+### Fix env declarations in processes
+
+```nextflow
+// ❌ ERROR - unquoted env
+process example {
+    env FOO
+
+    script:
+    """
+    echo $FOO
+    """
+}
+
+// ✅ FIX - quote env variables
+process example {
+    env 'FOO'
+
+    script:
+    """
+    echo $FOO
+    """
+}
+```
+
+### Replace switch statements
+
+```nextflow
+// ❌ ERROR - switch not allowed
+switch (type) {
+    case 'A':
+        handleA()
+        break
+    default:
+        handleDefault()
+}
+
+// ✅ FIX - use if-else
+if (type == 'A') {
+    handleA()
+} else {
+    handleDefault()
+}
+```
+
+### Move classes to lib/ directory
+
+```nextflow
+// ❌ ERROR - top-level class declarations not allowed
+class MyHelper {
+    static String format(String s) { s.toUpperCase() }
+}
+
+// ✅ FIX - move to lib/MyHelper.groovy
+// Then use: MyHelper.format('test')
+```
+
+### Fix addParams in include statements
+
+```nextflow
+// ❌ ERROR - addParams deprecated
+include { MODULE } from './modules/tool' addParams(options: [...])
+
+// ✅ FIX - pass as workflow inputs
+include { MODULE } from './modules/tool'
+
+workflow {
+    MODULE(input_ch, options: [...])
+}
+```

@@ -11,16 +11,329 @@ Comprehensive guide to nf-core standards, Nextflow conventions, and best practic
 ---
 
 ## Table of Contents
-1. [Nextflow DSL2 Conventions](#nextflow-dsl2-conventions)
-2. [Parameter Naming](#parameter-naming)
-3. [Channel Naming](#channel-naming)
-4. [Process Structure](#process-structure)
-5. [Module Guidelines](#module-guidelines)
-6. [Configuration Patterns](#configuration-patterns)
-7. [Testing Standards](#testing-standards)
-8. [Documentation Requirements](#documentation-requirements)
-9. [Git Workflow](#git-workflow)
-10. [Common Lint Fixes](#common-lint-fixes)
+1. [Nextflow Strict Syntax (CRITICAL)](#nextflow-strict-syntax-critical)
+2. [Nextflow DSL2 Conventions](#nextflow-dsl2-conventions)
+3. [Parameter Naming](#parameter-naming)
+4. [Channel Naming](#channel-naming)
+5. [Process Structure](#process-structure)
+6. [Module Guidelines](#module-guidelines)
+7. [Configuration Patterns](#configuration-patterns)
+8. [Testing Standards](#testing-standards)
+9. [Documentation Requirements](#documentation-requirements)
+10. [Git Workflow](#git-workflow)
+11. [Common Lint Fixes](#common-lint-fixes)
+
+---
+
+## Nextflow Strict Syntax (CRITICAL)
+
+### ⚠️ CRITICAL DEADLINE: Q2 2026
+
+**All nf-core pipelines must pass `nextflow lint` by Q2 2026.** Strict syntax will become the default in Nextflow v26.04.0 and is **mandatory** for all nf-core pipelines.
+
+### Check Your Code
+
+```bash
+# Check for strict syntax violations
+nextflow lint .
+
+# Enable strict syntax parser (v25.x)
+export NXF_SYNTAX_PARSER=v2
+nextflow lint .
+```
+
+### Removed Syntax (Errors)
+
+These patterns are **no longer supported** and will cause errors:
+
+| ❌ Not Allowed | ✅ Use Instead | Reason |
+|----------------|----------------|--------|
+| `import groovy.json.JsonSlurper` | `new groovy.json.JsonSlurper()` | Use fully qualified names |
+| `class MyClass { }` | Move to `lib/` directory | No top-level classes |
+| `hello(x = 1, y = 2)` | `x = 1; y = 2; hello(x, y)` | No assignment expressions |
+| `hello(x++, y--)` | `x += 1; y -= 1; hello(x, y)` | No increment in expressions |
+| `for (i in 0..10) { }` | Use `.each()` or `.collect()` | Use functional operators |
+| `while (condition) { }` | Use `.each()` or recursion | No while loops |
+| `switch (x) { }` | Use if-else chains | No switch statements |
+| `[meta, *bambai]` | `[meta, bambai[0], bambai[1]]` | Enumerate explicitly |
+| `"PWD = ${PWD}"` | `"PWD = ${env('PWD')}"` | Use `env()` function |
+| `$/multiline slashy/$` | Use `"""multiline"""` | Dollar slashy not supported |
+
+### Restricted Syntax (Modified Rules)
+
+#### Variable Declarations
+
+```nextflow
+// ✅ ALLOWED
+def a = 1
+def a: Integer = 1  // Type annotation (v25.10.0+)
+def (e, f) = [5, 6] // Destructuring
+
+// ❌ NOT ALLOWED
+final b = 2                    // No final keyword
+String str = 'hello'           // No Groovy-style types
+def c = 3, d = 4               // No multiple declarations
+```
+
+#### Include Statements
+
+```nextflow
+// ❌ OLD - addParams deprecated
+include { sayHello } from './module' addParams(message: 'Ciao')
+
+// ✅ NEW - pass as explicit workflow inputs
+include { sayHello } from './module'
+
+workflow {
+    sayHello(message: 'Ciao')
+}
+```
+
+#### Type Conversions
+
+```nextflow
+// ✅ ALLOWED - hard casts only
+def num = '42' as Integer
+def num = '42'.toInteger()
+
+// ❌ NOT ALLOWED - soft casts
+def map = (Map) readJson(json)
+```
+
+#### Process env Declarations
+
+```nextflow
+// ❌ OLD - unquoted
+env FOO
+env BAR
+
+// ✅ NEW - always quote
+env 'FOO'
+env 'BAR'
+```
+
+#### Process Script Section
+
+```nextflow
+// ✅ ALLOWED - implicit script when only code block
+process hello {
+    """
+    echo 'Hello world!'
+    """
+}
+
+// ❌ NOT ALLOWED - must label when other sections exist
+process greet {
+    input:
+    val greeting
+
+    """  // ERROR: must use script:
+    echo '${greeting}!'
+    """
+}
+
+// ✅ CORRECT
+process greet {
+    input:
+    val greeting
+
+    script:
+    """
+    echo '${greeting}!'
+    """
+}
+```
+
+#### Workflow Handlers
+
+```nextflow
+// ❌ OLD - top-level (deprecated)
+workflow.onComplete {
+    println "Pipeline completed"
+}
+
+// ✅ NEW - inside workflow (v25.10.0+)
+workflow {
+    main:
+    // workflow logic
+
+    onComplete:
+    println "Pipeline completed"
+}
+```
+
+### Deprecated Syntax (Warnings → Errors)
+
+These generate **warnings now**, but will become **errors** in future versions:
+
+```nextflow
+// ❌ DEPRECATED - Channel. with uppercase
+Channel.of(1, 2, 3)
+// ✅ CORRECT
+channel.of(1, 2, 3)
+
+// ❌ DEPRECATED - implicit closure parameters
+ch.map { it * 2 }
+// ✅ CORRECT - explicit parameters
+ch.map { v -> v * 2 }
+
+// ❌ DEPRECATED - shell section
+process example {
+    shell:
+    '''
+    echo "Using shell"
+    '''
+}
+// ✅ CORRECT - use script
+process example {
+    script:
+    """
+    echo "Using script"
+    """
+}
+```
+
+### Best Practices (Warnings in Paranoid Mode)
+
+```bash
+# Enable paranoid mode for stricter checks
+export NXF_LINTER_PARANOID=true
+nextflow lint .
+```
+
+**Avoid params outside entry workflow:**
+```nextflow
+// ❌ DISCOURAGED
+process example {
+    script:
+    """
+    tool --input ${params.input}
+    """
+}
+
+// ✅ BETTER - pass as explicit inputs
+process example {
+    input:
+    path input_file
+
+    script:
+    """
+    tool --input ${input_file}
+    """
+}
+```
+
+**Avoid process `when` sections:**
+```nextflow
+// ❌ DISCOURAGED - when inside process
+process example {
+    when:
+    params.run_tool
+
+    script:
+    """
+    tool
+    """
+}
+
+// ✅ BETTER - conditional logic in workflow
+workflow {
+    if (!params.skip_tool) {
+        example()
+    }
+}
+```
+
+### Migration Timeline
+
+| Date | Requirement |
+|------|-------------|
+| **Nov 2025** | Topic channels allowed (nf-core tools v3.5.0) |
+| **Q2 2026** | ⚠️ **Topic channels mandatory, strict syntax required** |
+| **Q4 2026** | Static types, records integrated into template |
+| **Q2 2027** | All modern syntax features mandatory |
+
+### Preserving Complex Groovy Code
+
+If you need full Groovy language features temporarily:
+
+**Option 1: lib/ directory** (temporary)
+```
+pipeline/
+└── lib/
+    └── Utils.groovy  # Full Groovy support
+```
+
+**Option 2: Plugins** (recommended for reusable code)
+```groovy
+// Create a Nextflow plugin for complex logic
+// See: https://nextflow.io/docs/latest/plugins.html
+```
+
+### Common Migration Patterns
+
+#### Replace for loops with .each()
+
+```nextflow
+// ❌ OLD
+def results = []
+for (item in list) {
+    results.add(process(item))
+}
+
+// ✅ NEW
+def results = list.collect { item ->
+    process(item)
+}
+```
+
+#### Replace while loops
+
+```nextflow
+// ❌ OLD
+while (condition) {
+    doSomething()
+}
+
+// ✅ NEW - use recursion or .each()
+def processUntil(condition) {
+    if (condition()) {
+        doSomething()
+        processUntil(condition)
+    }
+}
+```
+
+#### Replace switch statements
+
+```nextflow
+// ❌ OLD
+switch (type) {
+    case 'A':
+        handleA()
+        break
+    case 'B':
+        handleB()
+        break
+    default:
+        handleDefault()
+}
+
+// ✅ NEW
+if (type == 'A') {
+    handleA()
+} else if (type == 'B') {
+    handleB()
+} else {
+    handleDefault()
+}
+```
+
+### Resources
+
+- [Nextflow Strict Syntax Documentation](https://nextflow.io/docs/latest/strict-syntax.html)
+- [nf-core Roadmap](https://nf-co.re/blog/2025/nextflow_syntax_nf-core_roadmap)
+- [Nextflow Migration Guides](https://www.nextflow.io/docs/latest/migrations/25-04.html)
 
 ---
 

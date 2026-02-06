@@ -53,21 +53,24 @@ fi
 
 # Try to validate Nextflow syntax if nextflow is available
 if command -v nextflow &> /dev/null; then
-    # Get the directory containing the file
-    DIR=$(dirname "$FILE_PATH")
-    FILENAME=$(basename "$FILE_PATH")
+    # Run nextflow lint on the file to check for strict syntax violations
+    # This is CRITICAL for Q2 2026 deadline - all nf-core pipelines must pass
+    LINT_OUTPUT=$(nextflow lint "$FILE_PATH" 2>&1 || true)
 
-    # For config files, try basic Groovy syntax check
-    if [[ "$FILE_PATH" =~ \.config$ ]]; then
-        # Basic syntax check - look for common config errors
-        if grep -qE '^\s*[a-zA-Z_]+\s*$' "$FILE_PATH" 2>/dev/null | head -5; then
-            # Might be an incomplete assignment
-            :
-        fi
+    # Check for errors in the lint output
+    if echo "$LINT_OUTPUT" | grep -qE '(error|ERROR)'; then
+        # Extract error messages
+        ERROR_MSGS=$(echo "$LINT_OUTPUT" | grep -E '(error|ERROR)' | head -3 | tr '\n' ' ')
+        ERRORS="${ERRORS}Nextflow strict syntax violations detected: ${ERROR_MSGS}. Run 'nextflow lint ${FILE_PATH}' for details. Q2 2026 deadline: all pipelines must pass nextflow lint. "
     fi
 
-    # For .nf files, we could run nextflow -preview but it requires a valid config
-    # Just do static checks for now
+    # Check for warnings (deprecated patterns)
+    if echo "$LINT_OUTPUT" | grep -qE '(warning|WARNING)'; then
+        WARN_COUNT=$(echo "$LINT_OUTPUT" | grep -cE '(warning|WARNING)' || echo "0")
+        if [ "$WARN_COUNT" -gt 0 ]; then
+            WARNINGS="${WARNINGS}Nextflow lint found ${WARN_COUNT} warning(s) - deprecated patterns that will become errors in future versions. Run 'nextflow lint ${FILE_PATH}' for details. "
+        fi
+    fi
 fi
 
 # Check for overly broad output glob patterns (e.g., path("*.ext") instead of path("${prefix}.ext"))

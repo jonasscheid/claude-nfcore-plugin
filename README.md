@@ -72,19 +72,90 @@ Once installed, use skills with the `/nf-core:` prefix:
 ## Requirements
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) CLI
-- Conda environment `nf-core` with nf-core tools and nf-test installed:
-  ```bash
-  mamba create -n nf-core nf-core nf-test
-  ```
-- [Nextflow](https://www.nextflow.io/) installed for syntax validation hooks
+- Python environment with nf-core tools, nf-test, and Nextflow
+
+### Installation Options
+
+**Option 1: Conda/Mamba (Recommended)**
+
+All-in-one installation using the provided environment file:
+
+```bash
+# Using mamba (faster)
+mamba env create -f environment.yml
+mamba activate nf-core
+
+# Or using conda
+conda env create -f environment.yml
+conda activate nf-core
+
+# Verify installation
+nf-core --version
+nf-test --version
+nextflow -version
+```
+
+**Option 2: Pixi (Modern alternative)**
+
+[Pixi](https://pixi.sh) offers faster dependency resolution and better reproducibility:
+
+```bash
+# Install pixi
+curl -fsSL https://pixi.sh/install.sh | bash
+
+# Install dependencies
+pixi install
+
+# Use pixi shell or run commands directly
+pixi shell
+# OR
+pixi run nf-core --version
+```
+
+**Option 3: pip/uv (Python-only)**
+
+For users preferring Python package managers:
+
+```bash
+# Using pip
+pip install -r requirements.txt
+
+# Using uv (faster pip alternative)
+uv pip install -r requirements.txt
+
+# Note: You still need to install nf-test and Nextflow separately
+# nf-test: curl -fsSL https://get.nf-test.com | bash
+# Nextflow: curl -s https://get.nextflow.io | bash
+```
+
+**Option 4: Manual (Quick setup)**
+
+```bash
+mamba create -n nf-core nf-core nf-test nextflow
+```
+
+### Package Manager Notes
+
+- **The plugin's skills default to `conda run -n nf-core`** for command execution
+- If using **pixi**, commands will work directly in the pixi shell (`pixi shell`)
+- If using **pip/uv**, you'll need to ensure `nf-core`, `nf-test`, and `nextflow` are in your PATH
+- **Recommended**: Use mamba/conda or pixi for simplest setup with all dependencies
 
 ## nf-core Conventions Enforced
 
-This plugin helps enforce nf-core best practices:
+This plugin helps enforce nf-core best practices and Nextflow strict syntax requirements:
 
+### Nextflow Strict Syntax (Q2 2026 Deadline)
+- **Automatic validation** of `.nf` and `.config` files using `nextflow lint`
+- **Error detection** for removed syntax (for/while loops, switch, imports, etc.)
+- **Warning detection** for deprecated patterns (`Channel.`, implicit closures, `shell:`)
+- **Comprehensive guidance** on migrating to strict syntax compliance
+
+### nf-core Best Practices
 - Use lowercase `channel.` instead of `Channel.`
 - Parameter names in `snake_case`
 - Boolean parameters with negative naming (`skip_X` not `run_X`)
+- Prefix-based output patterns (`path("${prefix}.ext")` not `path("*.ext")`)
 - All nf-core commands run via `conda run -n nf-core`
 - PRs target `dev` branch for nf-core repos
 
