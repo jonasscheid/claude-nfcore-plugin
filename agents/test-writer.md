@@ -205,7 +205,7 @@ nextflow_pipeline {
 
 #### Key Rules for Pipeline-Level Tests
 
-1. **Use `nextflow_pipeline`** — not `nextflow_workflow` (which is for subworkflows)
+1. **Use `nextflow_pipeline`** — not `nextflow_workflow` (which is for subworkflows). The `profile` directive is silently ignored in `nextflow_workflow` and `nextflow_process` — it only works with `nextflow_pipeline`
 2. **Params go in `conf/test_XYZ.config`** — never inline in the nf-test file
 3. **Only `outdir` in the `when` block** — everything else comes from the profile
 4. **Profile override via `profile "test_XYZ"`** at the `nextflow_pipeline` level for non-default tests
@@ -213,6 +213,7 @@ nextflow_pipeline {
 6. **Tag with test variant name**: `tag "test_foo"` for filtering
 7. **Shared base paths** in `tests/nextflow.config` (e.g., `pipelines_testdata_base_path`)
 8. **Use `nft-utils` plugin** for `getAllFilesFromDir`, `removeNextflowVersion`
+9. **CLI `--profile` uses `+` prefix**: `--profile +docker` adds docker to the test profile. Without `+`, it replaces the test profile entirely (e.g., `--profile docker` drops the `test_XYZ` profile)
 
 ## Test Scenarios to Cover
 
@@ -374,9 +375,28 @@ conda run -n nf-core nf-test test tests/modules/tool/main.nf.test
 # Update snapshots
 conda run -n nf-core nf-test test --update-snapshot
 
-# Run with profile
-conda run -n nf-core nf-test test --profile docker
+# Run with container profile (+ prefix ADDS to test profile; without + it REPLACES)
+conda run -n nf-core nf-test test --profile +docker
 ```
+
+## Snapshot Verification After Test Runs
+
+After running tests (especially with `--update-snapshot`), always compare updated snapshots against the reference branch (typically `dev`) and present a summary table. This helps catch unintended changes.
+
+Compare each snapshot by parsing the JSON and checking:
+- File lists: count and set difference
+- Peptide/result lists: count, overlap, and differences
+
+Present results as a table:
+
+| Test | Files | Results | Match |
+|------|-------|---------|-------|
+| **default** | 71 = 71 | 252 = 252 | 100% |
+| **ionannotator** | 74 = 74 | 266 = 266 | 100% |
+| **mokapot** | 61 = 61 | — | 100% |
+| **speclib** | 73 = 73 | 252 = 252 | 100% |
+
+If there are differences, list them explicitly (e.g., "only in dev: 3 peptides, only in current: 5 peptides"). Do not dismiss snapshot changes as "stochastic" without verifying — many pipelines use fixed random seeds, so result changes are deterministic and indicate a real behavioral change.
 
 ## Best Practices
 
