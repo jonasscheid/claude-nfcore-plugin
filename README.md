@@ -4,7 +4,7 @@ A comprehensive Claude Code plugin for nf-core Nextflow pipeline development. In
 
 ## Features
 
-### Skills (15)
+### Skills (16)
 
 | Skill | Description |
 |-------|-------------|
@@ -23,6 +23,7 @@ A comprehensive Claude Code plugin for nf-core Nextflow pipeline development. In
 | `best-practices` | Comprehensive nf-core reference guide |
 | `open-pr` | Open PRs using nf-core PR template with checklist verification |
 | `open-issue` | Open issues using nf-core bug report or feature request templates |
+| `metro-map` | Generate subway-style metro maps for pipeline visualization |
 
 ### Agents (5)
 
@@ -171,7 +172,7 @@ This plugin helps enforce nf-core best practices and Nextflow strict syntax requ
 ├── hooks/
 │   └── hooks.json           # Validation hooks
 ├── scripts/                 # Hook scripts
-└── skills/                  # 15 user-invocable skills
+└── skills/                  # 16 user-invocable skills
 ```
 
 ## License
