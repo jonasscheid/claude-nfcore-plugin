@@ -1,6 +1,7 @@
 ---
 name: test-writer
 description: Creates nf-test tests for modules and workflows. Use when writing tests for new code, improving test coverage, creating snapshot tests, debugging test failures, or setting up testing infrastructure.
+color: yellow
 tools:
   - Read
   - Write

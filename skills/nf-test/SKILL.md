@@ -24,10 +24,10 @@ conda run -n nf-core nf-test test
 # Run tests for specific file/directory
 conda run -n nf-core nf-test test tests/modules/fastqc/
 
-# Run with specific profile
-conda run -n nf-core nf-test test --profile docker
-conda run -n nf-core nf-test test --profile singularity
-conda run -n nf-core nf-test test --profile conda
+# Run with container profile (+ prefix ADDS to test profile, without + it REPLACES)
+conda run -n nf-core nf-test test --profile +docker
+conda run -n nf-core nf-test test --profile +singularity
+conda run -n nf-core nf-test test --profile +conda
 
 # Run tests matching a tag
 conda run -n nf-core nf-test test --tag "modules"
@@ -265,9 +265,11 @@ nextflow_pipeline {
 ### Key Rules
 
 - **`nextflow_pipeline`** for pipeline tests, `nextflow_workflow` for subworkflows
+- **`profile` directive only works with `nextflow_pipeline`** — it is silently ignored in `nextflow_workflow` and `nextflow_process`
 - **Only `outdir`** in the `when` block — all other params come from the profile config
 - **`profile "test_XYZ"`** at the `nextflow_pipeline` level overrides the default
 - **Test name = profile**: `test("-profile test_XYZ")`
+- **CLI `--profile` uses `+` prefix** to add to test profile: `--profile +docker` gives `-profile test_XYZ,docker`. Without `+`, CLI replaces the test profile entirely
 - Use `nft-utils` plugin for `getAllFilesFromDir` and `removeNextflowVersion`
 
 ## Stub Runs for Large Data

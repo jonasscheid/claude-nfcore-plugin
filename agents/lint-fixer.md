@@ -1,6 +1,7 @@
 ---
 name: lint-fixer
 description: Autonomously fixes nf-core lint errors and warnings. Use when there are lint issues to fix, after running lint, when preparing for release, or when the pipeline has validation errors.
+color: green
 tools:
   - Read
   - Edit

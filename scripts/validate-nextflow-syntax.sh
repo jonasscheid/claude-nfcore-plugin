@@ -90,10 +90,11 @@ if [ "$OPEN_BRACES" -ne "$CLOSE_BRACES" ]; then
     WARNINGS="${WARNINGS}Possible mismatched braces (found $OPEN_BRACES open, $CLOSE_BRACES close). "
 fi
 
-# Output warnings if any
-if [ -n "$WARNINGS" ]; then
+# Output errors and/or warnings if any
+if [ -n "$ERRORS" ] || [ -n "$WARNINGS" ]; then
+    CONTEXT="${ERRORS}${WARNINGS}"
     # Format as JSON output for Claude Code
-    echo "{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"${WARNINGS}\"}}"
+    echo "{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"${CONTEXT}\"}}"
 fi
 
 exit 0

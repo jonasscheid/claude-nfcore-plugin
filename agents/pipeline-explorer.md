@@ -1,6 +1,7 @@
 ---
 name: pipeline-explorer
 description: Explores and analyzes nf-core pipeline structure, understanding workflows, modules, and configurations. Use proactively when needing to understand a pipeline's architecture, trace data flow, find specific processes, or when the user asks how a pipeline works.
+color: cyan
 tools:
   - Read
   - Glob
