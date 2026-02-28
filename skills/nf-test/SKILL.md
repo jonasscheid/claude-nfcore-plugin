@@ -3,7 +3,11 @@ name: nf-test
 description: Run and manage nf-test tests for Nextflow pipelines and modules. Use when testing workflows, creating test cases, debugging test failures, updating snapshots, or validating pipeline outputs.
 argument-hint: "[test-path] [--profile docker|singularity|conda]"
 allowed-tools:
-  - Bash(conda run -n nf-core *)
+  - Bash(conda run *)
+  - Bash(nf-core *)
+  - Bash(nf-test *)
+  - Bash(nextflow *)
+  - Bash(uv run *)
   - Read
   - Edit
   - Write
@@ -11,47 +15,37 @@ allowed-tools:
   - Grep
 ---
 
-# nf-test Testing for nf-core
+# nf-test Testing
 
-Run and manage tests using the nf-test framework for Nextflow pipelines and modules.
+Run and manage tests using nf-test for Nextflow pipelines and modules.
+
+Read `${CLAUDE_PLUGIN_ROOT}/shared/conventions.md` for nf-core conventions and package manager setup.
+Read `${CLAUDE_PLUGIN_ROOT}/shared/test-patterns.md` for test templates and patterns.
+
+---
 
 ## Quick Commands
 
+Replace `<cmd>` with the configured package manager prefix (see Setup in conventions.md).
+
 ```bash
-# Run all tests
-conda run -n nf-core nf-test test
-
-# Run tests for specific file/directory
-conda run -n nf-core nf-test test tests/modules/fastqc/
-
-# Run with container profile (+ prefix ADDS to test profile, without + it REPLACES)
-conda run -n nf-core nf-test test --profile +docker
-conda run -n nf-core nf-test test --profile +singularity
-conda run -n nf-core nf-test test --profile +conda
-
-# Run tests matching a tag
-conda run -n nf-core nf-test test --tag "modules"
-
-# Update snapshots
-conda run -n nf-core nf-test test --update-snapshot
-
-# Run with verbose output
-conda run -n nf-core nf-test test --verbose
-
-# List available tests
-conda run -n nf-core nf-test list
+<cmd> nf-test test                                # Run all tests
+<cmd> nf-test test tests/modules/fastqc/           # Specific path
+<cmd> nf-test test --profile +docker               # Add container profile (+ ADDS, no + REPLACES)
+<cmd> nf-test test --tag "modules"                  # Filter by tag
+<cmd> nf-test test --update-snapshot                # Update snapshots
+<cmd> nf-test test --verbose                        # Verbose output
+<cmd> nf-test list                                  # List available tests
 ```
 
-## Test File Structure
+---
 
-nf-test files use `.nf.test` extension:
+## Process Tests
 
 ```groovy
-// tests/modules/fastqc/main.nf.test
 nextflow_process {
-
     name "Test Process FASTQC"
-    script "../../../modules/nf-core/fastqc/main.nf"
+    script "../main.nf"
     process "FASTQC"
 
     tag "modules"
@@ -68,28 +62,21 @@ nextflow_process {
                 """
             }
         }
-
         then {
             assert process.success
             assert snapshot(process.out).match()
         }
     }
 
-    test("Paired-end reads") {
+    test("Stub run") {
+        options "-stub"
         when {
             process {
                 """
-                input[0] = [
-                    [ id:'test', single_end:false ],
-                    [
-                        file(params.test_data['sarscov2']['illumina']['test_1_fastq_gz'], checkIfExists: true),
-                        file(params.test_data['sarscov2']['illumina']['test_2_fastq_gz'], checkIfExists: true)
-                    ]
-                ]
+                input[0] = [ [ id:'test' ], file('dummy.fastq.gz') ]
                 """
             }
         }
-
         then {
             assert process.success
             assert snapshot(process.out).match()
@@ -98,117 +85,34 @@ nextflow_process {
 }
 ```
 
-## Snapshot Testing
-
-Snapshots capture output for comparison in future runs:
-
-```groovy
-then {
-    // Snapshot all outputs
-    assert snapshot(process.out).match()
-
-    // Snapshot specific output channel
-    assert snapshot(process.out.html).match()
-
-    // Snapshot with custom name
-    assert snapshot(process.out.zip).match("fastqc_zip_output")
-
-    // Snapshot file contents
-    assert snapshot(path(process.out.html[0][1]).readLines()[0..5]).match()
-}
-```
-
-Snapshot files are stored as `.nf.test.snap` alongside test files.
-
-## Common Assertions
-
-```groovy
-then {
-    // Check process succeeded
-    assert process.success
-
-    // Check process failed (for error testing)
-    assert process.failed
-
-    // Check exit code
-    assert process.exitStatus == 0
-
-    // Check output exists
-    assert process.out.html
-
-    // Check output count
-    assert process.out.html.size() == 1
-
-    // Check file exists
-    assert path(process.out.html[0][1]).exists()
-
-    // Check file content
-    assert path(process.out.html[0][1]).text.contains("FastQC")
-
-    // Check file MD5
-    assert path(process.out.html[0][1]).md5 == "expected_md5_hash"
-
-    // Check versions.yml
-    assert snapshot(process.out.versions).match()
-}
-```
-
-## Testing Subworkflows
-
-```groovy
-nextflow_workflow {
-
-    name "Test Workflow MYWORKFLOW"
-    script "../../../workflows/myworkflow.nf"
-    workflow "MYWORKFLOW"
-
-    test("Should run with test data") {
-        when {
-            workflow {
-                """
-                input[0] = channel.fromPath(params.input)
-                """
-            }
-        }
-
-        then {
-            assert workflow.success
-            assert snapshot(workflow.out).match()
-        }
-    }
-}
-```
+---
 
 ## Pipeline-Level Tests
 
-Pipeline tests use `nextflow_pipeline` and load params via profiles from `conf/test_XYZ.config`.
-**Params are NEVER defined inline** — they belong in the config file.
+Pipeline tests use `nextflow_pipeline` (NOT `nextflow_workflow`) and load params via profiles.
+**Params are NEVER defined inline** — they go in `conf/test_XYZ.config`.
 
 ### Required Setup
 
-1. **`conf/test_XYZ.config`** — defines all test params (inputs, flags, resources)
-2. **`nextflow.config` profiles** — maps `test_XYZ { includeConfig 'conf/test_XYZ.config' }`
-3. **`nf-test.config`** — sets `profile "test"` as default
+1. **`conf/test_XYZ.config`** — all test params (inputs, flags, resources)
+2. **`nextflow.config` profiles** — `test_XYZ { includeConfig 'conf/test_XYZ.config' }`
+3. **`nf-test.config`** — `profile "test"` as default
 4. **`tests/nextflow.config`** — shared test data base paths
 
 ### Default Pipeline Test
 
 ```groovy
-// tests/default.nf.test
 nextflow_pipeline {
-
     name "Test pipeline"
     script "../main.nf"
     tag "pipeline"
 
     test("-profile test") {
-
         when {
             params {
                 outdir = "$outputDir"
             }
         }
-
         then {
             def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
             def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
@@ -228,9 +132,7 @@ nextflow_pipeline {
 ### Variant Pipeline Test (Override Profile)
 
 ```groovy
-// tests/foo.nf.test — uses conf/test_foo.config via profile
 nextflow_pipeline {
-
     name "Test pipeline"
     script "../main.nf"
     tag "pipeline"
@@ -238,13 +140,11 @@ nextflow_pipeline {
     profile "test_foo"
 
     test("-profile test_foo") {
-
         when {
             params {
                 outdir = "$outputDir"
             }
         }
-
         then {
             def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
             def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
@@ -264,22 +164,68 @@ nextflow_pipeline {
 
 ### Key Rules
 
-- **`nextflow_pipeline`** for pipeline tests, `nextflow_workflow` for subworkflows
-- **`profile` directive only works with `nextflow_pipeline`** — it is silently ignored in `nextflow_workflow` and `nextflow_process`
-- **Only `outdir`** in the `when` block — all other params come from the profile config
-- **`profile "test_XYZ"`** at the `nextflow_pipeline` level overrides the default
-- **Test name = profile**: `test("-profile test_XYZ")`
-- **CLI `--profile` uses `+` prefix** to add to test profile: `--profile +docker` gives `-profile test_XYZ,docker`. Without `+`, CLI replaces the test profile entirely
-- Use `nft-utils` plugin for `getAllFilesFromDir` and `removeNextflowVersion`
+1. **`nextflow_pipeline`** for pipeline tests — `profile` is silently ignored in `nextflow_workflow`/`nextflow_process`
+2. **Params in `conf/test_XYZ.config`** — never inline in nf-test file
+3. **Only `outdir`** in the `when` block
+4. **`profile "test_XYZ"`** at `nextflow_pipeline` level overrides default
+5. **Test name = profile**: `test("-profile test_XYZ")`
+6. **CLI `--profile` uses `+` prefix**: `--profile +docker` adds to test profile; without `+` replaces
+7. **`nft-utils` plugin**: For `getAllFilesFromDir`, `removeNextflowVersion`
 
-## Stub Runs for Large Data
+---
 
-When test data is too large, use stub runs:
+## Snapshot Testing
+
+```groovy
+then {
+    // Snapshot all outputs
+    assert snapshot(process.out).match()
+
+    // Snapshot specific channel
+    assert snapshot(process.out.bam).match()
+
+    // Snapshot with custom name
+    assert snapshot(process.out.zip).match("fastqc_zip_output")
+
+    // Filter non-deterministic content before snapshotting
+    assert snapshot(path(process.out.log[0][1]).readLines().findAll { !it.startsWith('#') }).match()
+}
+```
+
+### Snapshot Verification
+
+After `--update-snapshot`, compare against the reference branch and present a summary table:
+
+| Test | Files | Results | Match |
+|------|-------|---------|-------|
+| **default** | 71 = 71 | 252 = 252 | 100% |
+
+Do not dismiss snapshot changes as stochastic — many pipelines use fixed seeds.
+
+---
+
+## Common Assertions
+
+```groovy
+assert process.success                              // Process succeeded
+assert process.failed                                // Process failed (error testing)
+assert process.out.html                              // Output exists
+assert process.out.html.size() == 1                  // Output count
+assert path(process.out.html[0][1]).exists()          // File exists
+assert path(process.out.html[0][1]).text.contains("FastQC")  // Content check
+assert path(process.out.bam[0][1]).md5 == 'hash'     // MD5 check
+assert process.out.result[0][0].id == 'test'          // Metadata preserved
+```
+
+---
+
+## Stub Runs
+
+For large-data tools, use stub tests:
 
 ```groovy
 test("Stub run") {
     options "-stub"
-
     when {
         process {
             """
@@ -287,7 +233,6 @@ test("Stub run") {
             """
         }
     }
-
     then {
         assert process.success
         assert snapshot(process.out).match()
@@ -295,93 +240,41 @@ test("Stub run") {
 }
 ```
 
-Define stubs in your module's `main.nf`:
+Requires `stub:` block in process main.nf — see module template.
 
-```nextflow
-process TOOL {
-    // ... normal process definition ...
+---
 
-    stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    """
-    touch ${prefix}.bam
-    touch ${prefix}.bam.bai
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        tool: 1.0.0
-    END_VERSIONS
-    """
-}
-```
-
-## Configuration
-
-Create `nf-test.config` in your pipeline root:
+## nf-test.config
 
 ```groovy
 config {
-    // location for all nf-test tests
     testsDir "."
-
-    // nf-test directory including temporary files for each test
     workDir System.getenv("NFT_WORKDIR") ?: ".nf-test"
-
-    // location of an optional nextflow.config file specific for executing tests
     configFile "tests/nextflow.config"
-
-    // ignore tests coming from the nf-core/modules repo
     ignore 'modules/nf-core/**/tests/*', 'subworkflows/nf-core/**/tests/*'
-
-    // run all tests with default profile from the main nextflow.config
     profile "test"
-
-    // list of filenames or patterns that should trigger a full test run
     triggers 'nextflow.config', 'nf-test.config', 'conf/test.config', 'tests/nextflow.config', 'tests/.nftignore'
-
-    // load the necessary plugins
     plugins {
         load "nft-utils@0.0.3"
     }
 }
 ```
 
-### `tests/nextflow.config` — Shared Test Base Paths
+### tests/nextflow.config
 
 ```nextflow
 params {
     modules_testdata_base_path = 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/'
     pipelines_testdata_base_path = 'https://raw.githubusercontent.com/nf-core/test-datasets/refs/heads/PIPELINE_NAME'
 }
-
 aws.client.anonymous = true
 ```
 
+---
+
 ## Debugging Test Failures
 
-1. **Run with verbose output**:
-   ```bash
-   conda run -n nf-core nf-test test --verbose tests/path/main.nf.test
-   ```
-
-2. **Check work directory**:
-   - Look in `.nf-test/` for execution logs
-   - Check `.command.err` and `.command.log` files
-
-3. **Update snapshots if outputs legitimately changed**:
-   ```bash
-   conda run -n nf-core nf-test test --update-snapshot tests/path/main.nf.test
-   ```
-
-4. **Review snapshot diffs**:
-   - Compare `.nf.test.snap` files in git diff
-   - Ensure changes are expected
-
-## Best Practices
-
-1. **Test all outputs**: Include assertions for every output channel
-2. **Use meaningful test names**: Describe what's being tested
-3. **Tag tests**: Use tags for filtering (`tag "modules"`, `tag "slow"`)
-4. **Minimal test data**: Use smallest datasets that exercise the code
-5. **Version snapshots**: Commit `.nf.test.snap` files with code
-6. **Review snapshot changes**: Part of code review process
+1. **Verbose output**: `<cmd> nf-test test --verbose tests/path/main.nf.test`
+2. **Check work directory**: Look in `.nf-test/` for `.command.err` and `.command.log`
+3. **Update snapshots**: `<cmd> nf-test test --update-snapshot tests/path/main.nf.test`
+4. **Review snapshot diffs**: Compare `.nf.test.snap` files in git diff
