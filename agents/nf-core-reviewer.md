@@ -1,7 +1,7 @@
 ---
 name: nf-core-reviewer
 description: Reviews code for nf-core compliance and best practices. Use proactively when reviewing PRs, checking code quality, ensuring nf-core standards are met, or validating pipeline changes before merge.
-color: green
+color: magenta
 tools:
   - Read
   - Glob

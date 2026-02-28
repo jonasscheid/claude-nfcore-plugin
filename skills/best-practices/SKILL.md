@@ -1,7 +1,6 @@
 ---
 name: best-practices
 description: Quick reference for nf-core conventions that differ from standard Nextflow — strict syntax rules, naming conventions, output patterns. Use when asking about conventions, coding style, or how to structure nf-core code correctly.
-user-invocable: true
 ---
 
 # nf-core Best Practices

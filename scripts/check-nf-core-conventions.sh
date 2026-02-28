@@ -69,7 +69,7 @@ fi
 
 # Check for overly broad output glob patterns (e.g., path("*.ext") instead of path("${prefix}.ext"))
 if echo "$CONTENT" | grep -qE '^\s*output:'; then
-    if echo "$CONTENT" | grep -qE 'path\(\s*"?\*\.[a-zA-Z]' | grep -vqE 'versions\.yml'; then
+    if echo "$CONTENT" | grep -E 'path\(\s*"?\*\.[a-zA-Z]' | grep -vqE 'versions\.yml'; then
         REMINDERS="${REMINDERS}Output uses broad wildcard pattern (e.g., path(\"*.ext\")). Use prefix-based patterns like path(\"\${prefix}.ext\") to avoid capturing staged input files as outputs, which causes unnecessary file copying (especially costly on cloud storage). "
     fi
 fi

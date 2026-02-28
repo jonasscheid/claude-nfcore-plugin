@@ -1,7 +1,7 @@
 ---
 name: module-creator
 description: Helps create new nf-core modules from scratch with proper structure, containers, tests, and documentation. Use when wrapping new bioinformatics tools, creating custom modules, or contributing modules to nf-core/modules.
-color: green
+color: red
 tools:
   - Read
   - Write

@@ -1,6 +1,9 @@
 # Claude Code local settings
 .claude/
 
+# Plugin user-specific settings (generated at first use)
+nf-core.local.md
+
 # OS files
 .DS_Store
 Thumbs.db
