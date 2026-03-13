@@ -149,6 +149,47 @@ tuple val(meta), path("*.bam"), emit: bam
 
 ---
 
+## GitHub Pull Requests & Issues
+
+When opening PRs or issues against any nf-core repository, **always use the repo's templates**.
+
+### Pull Requests
+
+Before creating a PR, read the repo's `.github/PULL_REQUEST_TEMPLATE.md` and use its structure as the PR body. Typically this includes a description section and a checklist. Fill in all applicable checklist items as checked (`[x]`) or unchecked (`[ ]`).
+
+```bash
+# Read the PR template
+cat .github/PULL_REQUEST_TEMPLATE.md
+
+# Create PR using the template structure
+gh pr create --title "..." --body "$(cat <<'EOF'
+<filled-in template content>
+EOF
+)"
+```
+
+### Issues
+
+Before creating an issue, read the repo's `.github/ISSUE_TEMPLATE/` directory to find the appropriate template (e.g., `bug_report.yml`, `feature_request.yml`, `new_module.yml`). Use the matching template's fields and structure.
+
+For YAML-based issue templates, map the template fields to the `gh issue create` body:
+
+```bash
+# List available issue templates
+ls .github/ISSUE_TEMPLATE/
+
+# Read the relevant template
+cat .github/ISSUE_TEMPLATE/<template>.yml
+
+# Create issue using the template structure
+gh issue create --title "..." --body "$(cat <<'EOF'
+<filled-in template content>
+EOF
+)"
+```
+
+---
+
 ## Resources
 
 - [Nextflow Strict Syntax](https://nextflow.io/docs/latest/strict-syntax.html)
