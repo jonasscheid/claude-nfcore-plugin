@@ -118,6 +118,8 @@ maintainers:
   - "@github_username"
 ```
 
+**IMPORTANT:** The `authors` and `maintainers` fields must use the GitHub username of the person pushing the code. Determine this from the git remote (`origin`) — never use placeholder accounts like `@nf-core-bot`.
+
 ## Container Sources
 
 1. **Bioconda/Biocontainers** (preferred):
