@@ -2,6 +2,24 @@
 
 Single source of truth for nf-core conventions. Read by all skills and agents.
 
+## CRITICAL — Never Modify nf-core Modules or Subworkflows Directly
+
+Files under `modules/nf-core/` and `subworkflows/nf-core/` are managed upstream in the [nf-core/modules](https://github.com/nf-core/modules) repository. **Never edit these files directly in a pipeline.**
+
+If you identify a needed change in an nf-core module or subworkflow:
+
+1. **Stop** — do not make the edit.
+2. **Prompt the user** explaining why the change seems necessary.
+3. **Suggest options**:
+   - **Patch**: Use `nf-core modules patch <module>` to create a tracked local patch that survives module updates.
+   - **Config override**: Use `conf/modules.config` to pass `ext.args`, `ext.prefix`, `publishDir`, or `ext.when` — most behavioral changes can be handled this way without touching module code.
+   - **Upstream PR**: If the fix benefits everyone, open a PR against [nf-core/modules](https://github.com/nf-core/modules), then update the module version in the pipeline once merged.
+   - **Local module**: If the change is pipeline-specific and substantial, copy the module to `modules/local/` and maintain it there.
+
+This applies to **all** agents and skills — including lint-fixer, pipeline-architect, and module-creator.
+
+---
+
 ## Setup — Package Manager
 
 Read `${CLAUDE_PLUGIN_ROOT}/nf-core.local.md` for the user's package manager preference.
