@@ -1,6 +1,6 @@
 {
   "name": "nf-core",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Comprehensive Claude Code plugin for nf-core Nextflow pipeline development. Includes skills for pipeline creation, module management, linting, testing, and release preparation following nf-core best practices.",
   "author": {
     "name": "nf-core community",

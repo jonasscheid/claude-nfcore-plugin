@@ -8,6 +8,11 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-nextflow-syntax.sh",
             "timeout": 30000
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/format-nextflow-files.sh",
+            "timeout": 30000
           }
         ]
       }
