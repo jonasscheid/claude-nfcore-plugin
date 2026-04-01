@@ -1,6 +1,7 @@
 ---
 name: best-practices
-description: Quick reference for nf-core conventions that differ from standard Nextflow — strict syntax rules, naming conventions, output patterns. Use when asking about conventions, coding style, or how to structure nf-core code correctly.
+description: This skill should be used when the user asks about "nf-core conventions", "strict syntax", "naming conventions", "output patterns", "coding style", "best practices", "parameter naming", "channel naming", "process labels", or how to structure nf-core code correctly. Covers strict syntax rules (Q2 2026 deadline), output glob patterns, and naming conventions.
+version: 0.1.0
 ---
 
 # nf-core Best Practices

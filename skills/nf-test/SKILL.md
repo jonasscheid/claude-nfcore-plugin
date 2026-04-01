@@ -1,18 +1,7 @@
 ---
 name: nf-test
-description: Run and manage nf-test tests for Nextflow pipelines and modules. Use when testing workflows, creating test cases, debugging test failures, updating snapshots, or validating pipeline outputs.
-argument-hint: "[test-path] [--profile docker|singularity|conda]"
-allowed-tools:
-  - Bash(conda run *)
-  - Bash(nf-core *)
-  - Bash(nf-test *)
-  - Bash(nextflow *)
-  - Bash(uv run *)
-  - Read
-  - Edit
-  - Write
-  - Glob
-  - Grep
+description: This skill should be used when the user asks to "run tests", "write nf-test", "create test cases", "debug test failures", "update snapshots", "validate pipeline outputs", "run nf-test", or mentions nf-test, snapshot testing, stub runs, or pipeline-level testing.
+version: 0.1.0
 ---
 
 # nf-test Testing
