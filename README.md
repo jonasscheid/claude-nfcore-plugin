@@ -38,16 +38,12 @@ git clone https://github.com/jonasscheid/claude-nfcore-plugin.git
 claude --plugin-dir ./claude-nfcore-plugin
 ```
 
-### Option 2: Add to Claude Code settings
+### Option 2: Load persistently via shell alias
 
-Add to your `~/.claude/settings.json`:
+To avoid passing `--plugin-dir` every time:
 
-```json
-{
-  "enabledPlugins": {
-    "/absolute/path/to/claude-nfcore-plugin": true
-  }
-}
+```bash
+alias claude='claude --plugin-dir /absolute/path/to/claude-nfcore-plugin'
 ```
 
 ## Usage
