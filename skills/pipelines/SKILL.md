@@ -1,20 +1,7 @@
 ---
 name: pipelines
-description: Full nf-core pipeline lifecycle — create, lint, schema, sync, and release. Includes Nextflow strict syntax validation (Q2 2026 deadline). Use for any `nf-core pipelines` operation.
-argument-hint: "[create|lint|schema|sync|release] [args]"
-disable-model-invocation: false
-allowed-tools:
-  - Bash(conda run *)
-  - Bash(nf-core *)
-  - Bash(nf-test *)
-  - Bash(nextflow *)
-  - Bash(uv run *)
-  - Bash(git *)
-  - Read
-  - Edit
-  - Write
-  - Glob
-  - Grep
+description: This skill should be used when the user asks to "create pipeline", "lint pipeline", "build schema", "sync template", "release pipeline", "validate params", or any `nf-core pipelines` operation. Covers the full nf-core pipeline lifecycle including Nextflow strict syntax validation (Q2 2026 deadline).
+version: 0.1.0
 ---
 
 # nf-core Pipelines

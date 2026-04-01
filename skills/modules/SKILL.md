@@ -1,20 +1,7 @@
 ---
 name: modules
-description: Manage nf-core modules and subworkflows — create, install, update, patch, and lint. Use for any `nf-core modules` or `nf-core subworkflows` operation.
-argument-hint: "[create|install|update|patch|lint] [name]"
-disable-model-invocation: false
-allowed-tools:
-  - Bash(conda run *)
-  - Bash(nf-core *)
-  - Bash(nf-test *)
-  - Bash(nextflow *)
-  - Bash(uv run *)
-  - Read
-  - Edit
-  - Write
-  - Glob
-  - Grep
-  - WebFetch(bioconda.github.io/*, quay.io/*)
+description: This skill should be used when the user asks to "create a module", "install module", "update module", "patch module", "lint module", "create subworkflow", "install subworkflow", "update subworkflow", or any `nf-core modules` or `nf-core subworkflows` operation.
+version: 0.1.0
 ---
 
 # nf-core Modules & Subworkflows
