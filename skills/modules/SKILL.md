@@ -2,7 +2,7 @@
 name: modules
 description: Manage nf-core modules and subworkflows — create, install, update, patch, and lint. Use for any `nf-core modules` or `nf-core subworkflows` operation.
 argument-hint: "[create|install|update|patch|lint] [name]"
-disable-model-invocation: true
+disable-model-invocation: false
 allowed-tools:
   - Bash(conda run *)
   - Bash(nf-core *)

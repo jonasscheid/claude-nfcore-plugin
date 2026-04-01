@@ -2,6 +2,7 @@
 name: prepare-plugin-release
 description: Prepare a new release of the nf-core Claude Code plugin — bumps version, updates CHANGELOG with merged PRs since the last release. Use before releasing a new plugin version.
 argument-hint: "[version]"
+disable-model-invocation: false
 allowed-tools:
   - Bash(gh *)
   - Bash(git *)

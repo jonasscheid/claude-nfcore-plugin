@@ -2,6 +2,7 @@
 name: nf-test
 description: Run and manage nf-test tests for Nextflow pipelines and modules. Use when testing workflows, creating test cases, debugging test failures, updating snapshots, or validating pipeline outputs.
 argument-hint: "[test-path] [--profile docker|singularity|conda]"
+disable-model-invocation: false
 allowed-tools:
   - Bash(conda run *)
   - Bash(nf-core *)

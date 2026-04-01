@@ -1,6 +1,7 @@
 ---
 name: pipeline-architect
 description: Analyzes existing pipelines and plans architectural changes, migrations, and refactoring. Use when modernizing a pipeline, migrating to strict syntax, restructuring workflows, or planning architectural changes.
+disable-model-invocation: true
 color: blue
 tools:
   - Read

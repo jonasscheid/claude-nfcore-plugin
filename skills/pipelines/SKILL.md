@@ -2,7 +2,7 @@
 name: pipelines
 description: Full nf-core pipeline lifecycle — create, lint, schema, sync, and release. Includes Nextflow strict syntax validation (Q2 2026 deadline). Use for any `nf-core pipelines` operation.
 argument-hint: "[create|lint|schema|sync|release] [args]"
-disable-model-invocation: true
+disable-model-invocation: false
 allowed-tools:
   - Bash(conda run *)
   - Bash(nf-core *)
