@@ -278,6 +278,8 @@ TEMPLATE ●────●─────────────► (template 
 - **CI workflows**: Take template version, add back custom jobs
 - **README.md**: Merge carefully, keep custom content
 
+For the full walkthrough — branch setup, per-file resolution heuristics, the git pitfalls that silently break a merge (stash mid-merge, `git add -A`), and the post-merge validation gate — see the **template-merge** sub-skill at `${CLAUDE_PLUGIN_ROOT}/skills/pipelines/template-merge/SKILL.md`.
+
 ### Fixing Broken TEMPLATE Branch
 
 ```bash
